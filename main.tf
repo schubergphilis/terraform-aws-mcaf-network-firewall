@@ -2,8 +2,8 @@ locals {
   rules_string = flatten([
     for key, rule in local.sorted_fqdn_rules : [
       for id, fqdn in rule.fqdns : {
-        http = format("%s http $src_ip_%d any -> any $HTTP_PORTS (http.host;dotprefix;content:\"%s\";endswith;flow:to_server,established;sid:%d%d2;)", lower(rule.action), key, fqdn, key, id)
-        tls  = format("%s tls $src_ip_%d any -> any $HTTP_PORTS (tls.sni;dotprefix;content:\"%s\";endswith;nocase;flow:to_server,established;sid:%d%d1;)", lower(rule.action), key, fqdn, key, id)
+        http = format("%s http $src_ip_%d any -> any $HTTP_PORTS (http.host;dotprefix;content:\"%s\";endswith;flow:to_server,established;sid:1%d%d2;)", lower(rule.action), key, fqdn, key, id)
+        tls  = format("%s tls $src_ip_%d any -> any $HTTP_PORTS (tls.sni;dotprefix;content:\"%s\";endswith;nocase;flow:to_server,established;sid:1%d%d1;)", lower(rule.action), key, fqdn, key, id)
     }]
   ])
 
