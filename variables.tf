@@ -145,7 +145,7 @@ variable "managed_rule_groups" {
       drop_mode = optional(bool, false)
       priority  = optional(number, 11)
     }), {})
-    ThreatSignaturesIOCS = optional(object({
+    ThreatSignaturesIOC = optional(object({
       enabled   = optional(bool, false)
       drop_mode = optional(bool, false)
       priority  = optional(number, 12)
