@@ -165,5 +165,7 @@ No modules.
 
 | Name | Description |
 |------|-------------|
+| <a name="output_cloudwatch_log_group_arn"></a> [cloudwatch\_log\_group\_arn](#output\_cloudwatch\_log\_group\_arn) | Map of CloudWatch log group type and arn when atleast one log type is enabled |
+| <a name="output_cloudwatch_log_group_name"></a> [cloudwatch\_log\_group\_name](#output\_cloudwatch\_log\_group\_name) | Map of CloudWatch log group type and name when atleast one log type is enabled |
 | <a name="output_firewall_status"></a> [firewall\_status](#output\_firewall\_status) | Information about the current status of the firewall. |
 <!-- END_TF_DOCS -->
