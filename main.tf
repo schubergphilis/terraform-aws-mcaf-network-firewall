@@ -303,7 +303,7 @@ resource "aws_networkfirewall_logging_configuration" "default" {
 resource "aws_cloudwatch_log_group" "default" {
   for_each = { for log_type, log_configuration in var.cloudwatch_logging_configuration : log_type => log_configuration if log_configuration.enabled }
 
-  name              = "${each.value.log_group_prefix}${var.name}-${split("_", each.key)[0]}-logs"
+  name              = each.value.log_group_name != null ? each.value.log_group_name : "${var.name}-${split("_", each.key)[0]}-logs"
   kms_key_id        = var.kms_key_arn
   retention_in_days = each.value.retention_in_days
 }
