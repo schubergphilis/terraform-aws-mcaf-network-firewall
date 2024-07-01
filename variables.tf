@@ -2,12 +2,12 @@ variable "cloudwatch_logging_configuration" {
   type = object({
     alert_logs = optional(object({
       enabled           = optional(bool, true)
-      log_group_prefix  = optional(string, "/platform/")
+      log_group_name    = optional(string, null)
       retention_in_days = optional(number, 90)
     }), {})
     flow_logs = optional(object({
       enabled           = optional(bool, true)
-      log_group_prefix  = optional(string, "/platform/")
+      log_group_name    = optional(string, null)
       retention_in_days = optional(number, 90)
     }), {})
   })
