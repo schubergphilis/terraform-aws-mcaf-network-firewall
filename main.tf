@@ -52,7 +52,7 @@ resource "aws_networkfirewall_firewall" "default" {
   }
 
   dynamic "subnet_mapping" {
-    for_each = var.subnet_id
+    for_each = var.subnet_ids
 
     content {
       subnet_id = subnet_mapping.value

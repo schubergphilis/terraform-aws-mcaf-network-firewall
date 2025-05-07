@@ -200,7 +200,7 @@ variable "name" {
   description = "Name of the firewall instance"
 }
 
-variable "subnet_id" {
+variable "subnet_ids" {
   type        = list(string)
   description = "List of subnet IDs onto which the network firewall will be deployed"
 }
