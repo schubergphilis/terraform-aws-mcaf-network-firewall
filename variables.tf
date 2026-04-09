@@ -29,8 +29,10 @@ variable "description" {
 
 variable "fqdn_rules" {
   type = map(object({
-    action    = string
-    fqdns     = list(string)
+    action = string
+    fqdns = map(object({
+      destination_ports = optional(list(string), ["80", "443"])
+    }))
     priority  = number
     source_ip = list(string)
   }))
