@@ -152,7 +152,7 @@ No modules.
 | <a name="input_delete_protection"></a> [delete\_protection](#input\_delete\_protection) | A boolean flag indicating whether it is possible to delete the firewall | `bool` | `true` | no |
 | <a name="input_description"></a> [description](#input\_description) | Description of the firewall instance | `string` | `"AWS Network Firewall"` | no |
 | <a name="input_fqdn_rule_group_priority"></a> [fqdn\_rule\_group\_priority](#input\_fqdn\_rule\_group\_priority) | Priority of the rule group | `number` | `30` | no |
-| <a name="input_fqdn_rules"></a> [fqdn\_rules](#input\_fqdn\_rules) | Map with L7 egress firewall rules | <pre>map(object({<br/>    action    = string<br/>    fqdns     = list(string)<br/>    priority  = number<br/>    source_ip = list(string)<br/>  }))</pre> | `{}` | no |
+| <a name="input_fqdn_rules"></a> [fqdn\_rules](#input\_fqdn\_rules) | Map with L7 egress firewall rules | <pre>map(object({<br/>    action = string<br/>    fqdns = map(object({<br/>      destination_ports = optional(list(string), ["80", "443"])<br/>    }))<br/>    priority  = number<br/>    source_ip = list(string)<br/>  }))</pre> | `{}` | no |
 | <a name="input_fqdn_rules_capacity"></a> [fqdn\_rules\_capacity](#input\_fqdn\_rules\_capacity) | Capacity of the rule group | `number` | `1000` | no |
 | <a name="input_home_net"></a> [home\_net](#input\_home\_net) | List of CIDRs to override the HOME\_NET variable with | `list(string)` | `[]` | no |
 | <a name="input_ip_rule_group_priority"></a> [ip\_rule\_group\_priority](#input\_ip\_rule\_group\_priority) | Priority of the rule group | `number` | `40` | no |
