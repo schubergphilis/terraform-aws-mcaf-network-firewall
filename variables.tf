@@ -29,13 +29,20 @@ variable "description" {
 
 variable "fqdn_rules" {
   type = map(object({
-    action    = string
-    fqdns     = list(string)
+    action = string
+    fqdns = map(object({
+      destination_ports = optional(list(string), ["80", "443"])
+    }))
     priority  = number
     source_ip = list(string)
   }))
   default     = {}
   description = "Map with L7 egress firewall rules"
+
+  validation {
+    condition     = length(values(var.fqdn_rules)[*].priority) == length(distinct(values(var.fqdn_rules)[*].priority))
+    error_message = "Each FQDN rule must have a unique priority value."
+  }
 }
 
 variable "fqdn_rules_capacity" {

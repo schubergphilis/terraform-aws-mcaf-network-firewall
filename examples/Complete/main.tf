@@ -7,7 +7,7 @@ module "network_firewall" {
 
   name        = "egress-firewall"
   home_net    = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]
-  subnet_id   = aws_subnet.network_firewall[*].id
+  subnet_ids  = module.vpc.private_subnets
   vpc_id      = module.vpc.vpc_id
   kms_key_arn = module.kms_key.arn
 
@@ -60,16 +60,35 @@ module "network_firewall" {
   fqdn_rules = {
     blocked_domains = {
       action    = "DROP"
-      fqdns     = ["icanhazip.com", "parrot.live", "www.nu.nl", "tweakers.net"]
-      source_ip = ["10.0.1.0/24", "10.0.2.0/24"]
       priority  = 1
+      source_ip = ["10.0.1.0/24", "10.0.2.0/24"]
+      fqdns = {
+        "icanhazip.com" = {}
+        "parrot.live"   = {}
+        "www.nu.nl"     = {}
+        "tweakers.net"  = {}
+      }
     }
 
     allow_essential_sites = {
       action    = "PASS"
-      fqdns     = ["parrot.live", "www.nu.nl"]
-      source_ip = ["10.0.0.0/16"]
       priority  = 2
+      source_ip = ["10.0.0.0/16"]
+      fqdns = {
+        "parrot.live" = {}
+        "www.nu.nl"   = {}
+      }
+    }
+
+    allow_custom_ports = {
+      action    = "PASS"
+      priority  = 3
+      source_ip = ["10.0.0.0/16"]
+      fqdns = {
+        "api.example.com"      = { destination_ports = ["8443", "9000"] }
+        "webhook.example.com"  = { destination_ports = ["443", "8080"] }
+        "standard.example.com" = {} # uses default ports 80, 443
+      }
     }
   }
 

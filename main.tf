@@ -1,12 +1,25 @@
 locals {
-  rules_string = flatten([
-    for key, rule in local.sorted_fqdn_rules : [
-      for id, fqdn in rule.fqdns : {
-        http = format("%s http $src_ip_%d any -> any $HTTP_PORTS (http.host;dotprefix;content:\"%s\";endswith;flow:to_server,established;sid:1%d%d2;)", lower(rule.action), key, fqdn, key, id)
-        tls  = format("%s tls $src_ip_%d any -> any $HTTP_PORTS (tls.sni;dotprefix;content:\"%s\";endswith;nocase;flow:to_server,established;sid:1%d%d1;)", lower(rule.action), key, fqdn, key, id)
-    }]
+  # Flatten FQDN rules to create individual entries per FQDN with their destination ports
+  flattened_fqdn_rules = flatten([
+    for rule_key, rule in var.fqdn_rules : [
+      for fqdn, fqdn_config in rule.fqdns : {
+        rule_key          = rule_key
+        action            = rule.action
+        fqdn              = fqdn
+        destination_ports = fqdn_config.destination_ports
+        priority          = rule.priority
+        source_ip         = rule.source_ip
+      }
+    ]
   ])
 
+  # Create a map with unique keys for each FQDN entry
+  fqdn_rules_map = {
+    for idx, entry in local.flattened_fqdn_rules :
+    idx => entry
+  }
+
+  # Keep sorted rules for ip_sets (one per rule, not per FQDN) - using index for naming
   sorted_fqdn_rules = values({
     for k, v in var.fqdn_rules : format("%03d", v.priority) => {
       action      = v.action
@@ -16,6 +29,33 @@ locals {
       source_ip   = v.source_ip
     }
   })
+
+  # Create a map to lookup rule index by priority
+  fqdn_rule_priority_to_index = {
+    for idx, rule in local.sorted_fqdn_rules : rule.priority => idx
+  }
+
+  # Create unique port sets by deduplicating destination_ports combinations
+  # Use sorted join of ports as key to ensure consistent ordering
+  unique_port_sets = {
+    for ports_key, ports in {
+      for entry in local.flattened_fqdn_rules :
+      join("_", sort(entry.destination_ports)) => entry.destination_ports...
+    } : ports_key => ports[0]
+  }
+
+  # Map each FQDN entry to its port set key
+  fqdn_to_port_set_key = {
+    for key, entry in local.fqdn_rules_map :
+    key => join("_", sort(entry.destination_ports))
+  }
+
+  rules_string = [
+    for key, rule in local.fqdn_rules_map : {
+      http = format("%s http $src_ip_%d any -> any $dst_prt_%s (http.host;dotprefix;content:\"%s\";endswith;flow:to_server,established;sid:1%d%d2;)", lower(rule.action), local.fqdn_rule_priority_to_index[rule.priority], local.fqdn_to_port_set_key[key], rule.fqdn, local.fqdn_rule_priority_to_index[rule.priority], key)
+      tls  = format("%s tls $src_ip_%d any -> any $dst_prt_%s (tls.sni;dotprefix;content:\"%s\";endswith;nocase;flow:to_server,established;sid:1%d%d1;)", lower(rule.action), local.fqdn_rule_priority_to_index[rule.priority], local.fqdn_to_port_set_key[key], rule.fqdn, local.fqdn_rule_priority_to_index[rule.priority], key)
+    }
+  ]
 
   sorted_ip_rules = values({
     for k, v in var.ip_rules : format("%03d", v.priority) => {
@@ -166,11 +206,15 @@ resource "aws_networkfirewall_rule_group" "fqdn_rules" {
         }
       }
 
-      port_sets {
-        key = "HTTP_PORTS"
+      dynamic "port_sets" {
+        for_each = local.unique_port_sets
 
-        port_set {
-          definition = ["80", "443"]
+        content {
+          key = "dst_prt_${port_sets.key}"
+
+          port_set {
+            definition = port_sets.value
+          }
         }
       }
     }
