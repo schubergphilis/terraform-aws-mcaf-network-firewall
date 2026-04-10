@@ -7,7 +7,7 @@ module "network_firewall" {
 
   name        = "egress-firewall"
   home_net    = ["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]
-  subnet_ids  = aws_subnet.network_firewall[*].id
+  subnet_ids  = module.vpc.private_subnets
   vpc_id      = module.vpc.vpc_id
   kms_key_arn = module.kms_key.arn
 
