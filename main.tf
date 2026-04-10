@@ -39,26 +39,21 @@ locals {
   # Use sorted join of ports as key to ensure consistent ordering
   unique_port_sets = {
     for ports_key, ports in {
-      for idx, entry in local.flattened_fqdn_rules :
-      join(",", sort(entry.destination_ports)) => entry.destination_ports...
+      for entry in local.flattened_fqdn_rules :
+      join("_", sort(entry.destination_ports)) => entry.destination_ports...
     } : ports_key => ports[0]
   }
 
-  # Create a map from port combination to port_set index
-  port_set_key_to_index = {
-    for idx, ports_key in keys(local.unique_port_sets) : ports_key => idx
-  }
-
-  # Map each FQDN entry to its port_set index
-  fqdn_to_port_set_index = {
-    for idx, entry in local.flattened_fqdn_rules :
-    idx => local.port_set_key_to_index[join(",", sort(entry.destination_ports))]
+  # Map each FQDN entry to its port set key
+  fqdn_to_port_set_key = {
+    for key, entry in local.fqdn_rules_map :
+    key => join("_", sort(entry.destination_ports))
   }
 
   rules_string = [
     for key, rule in local.fqdn_rules_map : {
-      http = format("%s http $src_ip_%d any -> any $dst_prt_%d (http.host;dotprefix;content:\"%s\";endswith;flow:to_server,established;sid:1%d%d2;)", lower(rule.action), local.fqdn_rule_priority_to_index[rule.priority], local.fqdn_to_port_set_index[key], rule.fqdn, local.fqdn_rule_priority_to_index[rule.priority], key)
-      tls  = format("%s tls $src_ip_%d any -> any $dst_prt_%d (tls.sni;dotprefix;content:\"%s\";endswith;nocase;flow:to_server,established;sid:1%d%d1;)", lower(rule.action), local.fqdn_rule_priority_to_index[rule.priority], local.fqdn_to_port_set_index[key], rule.fqdn, local.fqdn_rule_priority_to_index[rule.priority], key)
+      http = format("%s http $src_ip_%d any -> any $dst_prt_%s (http.host;dotprefix;content:\"%s\";endswith;flow:to_server,established;sid:1%d%d2;)", lower(rule.action), local.fqdn_rule_priority_to_index[rule.priority], local.fqdn_to_port_set_key[key], rule.fqdn, local.fqdn_rule_priority_to_index[rule.priority], key)
+      tls  = format("%s tls $src_ip_%d any -> any $dst_prt_%s (tls.sni;dotprefix;content:\"%s\";endswith;nocase;flow:to_server,established;sid:1%d%d1;)", lower(rule.action), local.fqdn_rule_priority_to_index[rule.priority], local.fqdn_to_port_set_key[key], rule.fqdn, local.fqdn_rule_priority_to_index[rule.priority], key)
     }
   ]
 
@@ -215,7 +210,7 @@ resource "aws_networkfirewall_rule_group" "fqdn_rules" {
         for_each = local.unique_port_sets
 
         content {
-          key = "dst_prt_${local.port_set_key_to_index[port_sets.key]}"
+          key = "dst_prt_${port_sets.key}"
 
           port_set {
             definition = port_sets.value
