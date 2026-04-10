@@ -38,6 +38,11 @@ variable "fqdn_rules" {
   }))
   default     = {}
   description = "Map with L7 egress firewall rules"
+
+  validation {
+    condition     = length(values(var.fqdn_rules)[*].priority) == length(distinct(values(var.fqdn_rules)[*].priority))
+    error_message = "Each FQDN rule must have a unique priority value."
+  }
 }
 
 variable "fqdn_rules_capacity" {
