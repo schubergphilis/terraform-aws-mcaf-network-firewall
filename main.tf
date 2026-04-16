@@ -19,6 +19,8 @@ locals {
     idx => entry
   }
 
+  region = var.region != null ? var.region : data.aws_region.default.region
+
   # Keep sorted rules for ip_sets (one per rule, not per FQDN) - using index for naming
   sorted_fqdn_rules = values({
     for k, v in var.fqdn_rules : format("%03d", v.priority) => {
@@ -79,6 +81,7 @@ data "aws_region" "default" {}
 ################################################################################
 
 resource "aws_networkfirewall_firewall" "default" {
+  region              = local.region
   name                = var.name
   delete_protection   = var.delete_protection
   description         = var.description
@@ -101,8 +104,9 @@ resource "aws_networkfirewall_firewall" "default" {
 }
 
 resource "aws_networkfirewall_firewall_policy" "default" {
-  name = "${var.name}-policy"
-  tags = var.tags
+  region = local.region
+  name   = "${var.name}-policy"
+  tags   = var.tags
 
   encryption_configuration {
     key_id = var.kms_key_arn
@@ -137,7 +141,7 @@ resource "aws_networkfirewall_firewall_policy" "default" {
 
       content {
         priority     = stateful_rule_group_reference.value.priority
-        resource_arn = "arn:aws:network-firewall:${data.aws_region.default.name}:aws-managed:stateful-rulegroup/${stateful_rule_group_reference.key}StrictOrder"
+        resource_arn = "arn:aws:network-firewall:${local.region}:aws-managed:stateful-rulegroup/${stateful_rule_group_reference.key}StrictOrder"
       }
     }
 
@@ -147,7 +151,7 @@ resource "aws_networkfirewall_firewall_policy" "default" {
 
       content {
         priority     = stateful_rule_group_reference.value.priority
-        resource_arn = "arn:aws:network-firewall:${data.aws_region.default.name}:aws-managed:stateful-rulegroup/${stateful_rule_group_reference.key}StrictOrder"
+        resource_arn = "arn:aws:network-firewall:${local.region}:aws-managed:stateful-rulegroup/${stateful_rule_group_reference.key}StrictOrder"
 
         override {
           action = "DROP_TO_ALERT"
@@ -178,6 +182,7 @@ resource "aws_networkfirewall_firewall_policy" "default" {
 resource "aws_networkfirewall_rule_group" "fqdn_rules" {
   count = length(local.sorted_fqdn_rules) > 0 ? 1 : 0
 
+  region   = local.region
   capacity = var.fqdn_rules_capacity
   name     = "${var.name}-fqdn-rules"
   type     = "STATEFUL"
@@ -228,6 +233,7 @@ resource "aws_networkfirewall_rule_group" "fqdn_rules" {
 resource "aws_networkfirewall_rule_group" "ip_rules" {
   count = length(local.sorted_ip_rules) > 0 ? 1 : 0
 
+  region   = local.region
   capacity = var.ip_rules_capacity
   name     = "${var.name}-ip-rules"
   type     = "STATEFUL"
@@ -326,6 +332,7 @@ resource "aws_networkfirewall_rule_group" "ip_rules" {
 resource "aws_networkfirewall_logging_configuration" "default" {
   count = var.cloudwatch_logging_configuration["alert_logs"].enabled || var.cloudwatch_logging_configuration["flow_logs"].enabled ? 1 : 0
 
+  region       = local.region
   firewall_arn = aws_networkfirewall_firewall.default.arn
 
   logging_configuration {
@@ -347,6 +354,7 @@ resource "aws_networkfirewall_logging_configuration" "default" {
 resource "aws_cloudwatch_log_group" "default" {
   for_each = { for log_type, log_configuration in var.cloudwatch_logging_configuration : log_type => log_configuration if log_configuration.enabled }
 
+  region            = local.region
   name              = "${each.value.log_group_prefix}${var.name}-${split("_", each.key)[0]}-logs"
   kms_key_id        = var.kms_key_arn
   retention_in_days = each.value.retention_in_days
