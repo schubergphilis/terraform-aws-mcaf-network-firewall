@@ -81,7 +81,7 @@ data "aws_region" "default" {}
 ################################################################################
 
 resource "aws_networkfirewall_firewall" "default" {
-  region              = local.region
+  region              = var.region
   name                = var.name
   delete_protection   = var.delete_protection
   description         = var.description
@@ -104,7 +104,7 @@ resource "aws_networkfirewall_firewall" "default" {
 }
 
 resource "aws_networkfirewall_firewall_policy" "default" {
-  region = local.region
+  region = var.region
   name   = "${var.name}-policy"
   tags   = var.tags
 
@@ -182,7 +182,7 @@ resource "aws_networkfirewall_firewall_policy" "default" {
 resource "aws_networkfirewall_rule_group" "fqdn_rules" {
   count = length(local.sorted_fqdn_rules) > 0 ? 1 : 0
 
-  region   = local.region
+  region   = var.region
   capacity = var.fqdn_rules_capacity
   name     = "${var.name}-fqdn-rules"
   type     = "STATEFUL"
@@ -233,7 +233,7 @@ resource "aws_networkfirewall_rule_group" "fqdn_rules" {
 resource "aws_networkfirewall_rule_group" "ip_rules" {
   count = length(local.sorted_ip_rules) > 0 ? 1 : 0
 
-  region   = local.region
+  region   = var.region
   capacity = var.ip_rules_capacity
   name     = "${var.name}-ip-rules"
   type     = "STATEFUL"
@@ -332,7 +332,7 @@ resource "aws_networkfirewall_rule_group" "ip_rules" {
 resource "aws_networkfirewall_logging_configuration" "default" {
   count = var.cloudwatch_logging_configuration["alert_logs"].enabled || var.cloudwatch_logging_configuration["flow_logs"].enabled ? 1 : 0
 
-  region       = local.region
+  region       = var.region
   firewall_arn = aws_networkfirewall_firewall.default.arn
 
   logging_configuration {
@@ -354,7 +354,7 @@ resource "aws_networkfirewall_logging_configuration" "default" {
 resource "aws_cloudwatch_log_group" "default" {
   for_each = { for log_type, log_configuration in var.cloudwatch_logging_configuration : log_type => log_configuration if log_configuration.enabled }
 
-  region            = local.region
+  region            = var.region
   name              = "${each.value.log_group_prefix}${var.name}-${split("_", each.key)[0]}-logs"
   kms_key_id        = var.kms_key_arn
   retention_in_days = each.value.retention_in_days
