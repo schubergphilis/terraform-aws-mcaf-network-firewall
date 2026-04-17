@@ -207,6 +207,12 @@ variable "name" {
   description = "Name of the firewall instance"
 }
 
+variable "region" {
+  type        = string
+  default     = null
+  description = "The AWS region where resources will be created; if omitted the default provider region is used"
+}
+
 variable "subnet_ids" {
   type        = list(string)
   description = "List of subnet IDs onto which the network firewall will be deployed"
