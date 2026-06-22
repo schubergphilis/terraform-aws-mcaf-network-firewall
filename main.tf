@@ -81,13 +81,14 @@ data "aws_region" "default" {}
 ################################################################################
 
 resource "aws_networkfirewall_firewall" "default" {
-  region              = var.region
-  name                = var.name
-  delete_protection   = var.delete_protection
-  description         = var.description
-  firewall_policy_arn = aws_networkfirewall_firewall_policy.default.arn
-  vpc_id              = var.vpc_id
-  tags                = var.tags
+  region                 = var.region
+  name                   = var.name
+  delete_protection      = var.delete_protection
+  description            = var.description
+  enabled_analysis_types = var.enabled_analysis_types
+  firewall_policy_arn    = aws_networkfirewall_firewall_policy.default.arn
+  vpc_id                 = var.vpc_id
+  tags                   = var.tags
 
   encryption_configuration {
     key_id = var.kms_key_arn
