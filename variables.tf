@@ -27,6 +27,17 @@ variable "description" {
   default     = "AWS Network Firewall"
 }
 
+variable "enabled_analysis_types" {
+  type        = list(string)
+  description = "Set of types for which to collect analysis metrics"
+  default     = ["TLS_SNI", "HTTP_HOST"]
+
+  validation {
+    condition     = alltrue([for v in var.enabled_analysis_types : contains(["TLS_SNI", "HTTP_HOST"], v)])
+    error_message = "Valid values for enabled_analysis_types are: TLS_SNI, HTTP_HOST."
+  }
+}
+
 variable "fqdn_rules" {
   type = map(object({
     action = string
