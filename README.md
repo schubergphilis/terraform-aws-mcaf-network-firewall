@@ -1,3 +1,9 @@
+<!-- migrate-repo:banner -->
+> [!IMPORTANT]
+> **This repository has moved to [`schubergphilis-ep/terraform-aws-mcaf-network-firewall`](https://github.com/schubergphilis-ep/terraform-aws-mcaf-network-firewall).**
+> Please update your references and use the new location for issues, PRs, and contributions.
+<!-- migrate-repo:banner -->
+
 # terraform-aws-mcaf-network-firewall
 
 Terraform module to setup and manage a Network Firewall, it supports the following features:
